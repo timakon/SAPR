@@ -50,7 +50,7 @@ def make_matrix(data: list) -> np.array:
 # In[4]:
 
 
-def get_json_data(json_path1, json_path2):
+def task5(json_path1, json_path2):
     data1 = json.loads(open(json_path1).read())
     data2 = json.loads(open(json_path2).read())
     return find_controversies(make_matrix(data1), make_matrix(data2))
@@ -77,5 +77,5 @@ def find_controversies(data1, data2):
 # In[6]:
 
 
-get_json_data("example.json", "example2.json")
+task5("example.json", "example2.json")
 
