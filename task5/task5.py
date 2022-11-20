@@ -1,22 +1,10 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# In[1]:
-
-
 import numpy as np
 
 import json
 from io import StringIO
 
 
-# In[2]:
-
-
 SEQ_LEN = 10
-
-
-# In[3]:
 
 
 def make_row(visited: set, cur: int) -> np.array:
@@ -47,16 +35,10 @@ def make_matrix(data: list) -> np.array:
     return np.array(raw)
 
 
-# In[4]:
-
-
-def task5(json_path1, json_path2):
+def get_json_data(json_path1, json_path2):
     data1 = json.loads(open(json_path1).read())
     data2 = json.loads(open(json_path2).read())
     return find_controversies(make_matrix(data1), make_matrix(data2))
-
-
-# In[5]:
 
 
 def find_controversies(data1, data2):
@@ -69,13 +51,9 @@ def find_controversies(data1, data2):
     for i in range(criterion.shape[0]):
         for j in range(i):
             if not criterion[i][j]:
-                answer.append([j+1, i+1])
+                answer.append((['{}'.format(j+1), '{}'.format(i+1)]))
 
     return answer
 
 
-# In[6]:
-
-
-task5("example.json", "example2.json")
-
+get_json_data("example.json", "example2.json")
