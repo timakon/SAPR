@@ -1,111 +1,91 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# In[1]:
-
-
-import pandas as pd
-import numpy as np
-from collections import defaultdict
-from queue import SimpleQueue
+import csv
 import math
+from io import StringIO
+
+def readString(string_data):
+    result = []
+    string_stream = StringIO(string_data)
+    reader = csv.reader(string_stream, delimiter=",")
+    for row in reader:
+        result.append(row)
+    return result
 
 
-# In[2]:
+def getNodeList(graph):
+    node_map = {}
+    for [parent, child] in graph:
+        node_map[parent] = True
+        node_map[child] = True
+    return list(node_map.keys())
 
 
-def find_r1_and_r2(l: dict, A: np.array) -> dict:
-    for row in A:
-        l[row[0]][0] += 1
-        l[row[1]][1] += 1
-    return l
+def findChild(node, graph):
+    found = []
+    for [parent, child] in graph:
+        if parent == node:
+            found.append(child)
+    return found
 
 
-# In[3]:
+def findParent(node, graph):
+    found = []
+    for [parent, child] in graph:
+        if child == node:
+            found.append(parent)
+    return found
 
+def findAncestor(node, graph):
+    found = []
+    parents = findParent(node, graph)
+    for parent in parents:
+        grand_parents = findParent(parent, graph)
+        if (len(grand_parents) > 0):
+            found.extend(grand_parents)
+            found.extend(findAncestor(parent, graph))
+    return found
 
+def findDescendant(node, graph):
+    found = []
+    children = findChild(node, graph)
+    for child in children:
+        grand_children = findChild(child, graph)
+        if (len(grand_children) > 0):
+            found.extend(grand_children)
+            found.extend(findAncestor(child, graph))
+    return found
 
-def find_r1to4(l: dict, A: np.array) -> dict:
-    for row in A:
-        main = row[0]
-        sub = row[1]
-        l[main][0] += 1
-        l[sub][1] += 1
-        for subrow in A:
-            if subrow[0] == sub:
-                l[main][2] += 1
-                l[subrow[1]][3] += 1
-    return l
+def findNeighbours(node, graph):
+    parents = findParent(node, graph)
+    neighbours = []
+    for parent in parents:
+        children = findChild(parent, graph)
+        children.remove(node)
+        neighbours.extend(children)
+    return neighbours
 
+def findEntropy(graph_stats):
+    total_sum = 0
+    n = len(graph_stats)
+    for [node, stats] in graph_stats:
+        in_sum = 0
+        for j in stats:
+            p = j / (n - 1)
+            if p > 0:
+                b = math.log(p, 2)
+                in_sum += p * b
+        total_sum += in_sum
+    return -total_sum
 
-# In[4]:
-
-
-def find_r5(d: dict, A: np.array) -> dict:
-    q = SimpleQueue()
-    q.put(1)
-
-    r5 = {}
-
-    while not q.empty():
-        main = q.get()
-        l = []
-        for row in A:
-            if row[0] == main:
-                l.append(row[1])
-                q.put(row[1])
-        if len(l) > 1:
-            for elem in l:
-                d[elem][4] += l.__len__() - 1
-
-    return d
-
-
-# In[5]:
-
-
-def entropy_calc(graph: np.array) -> float:
-    def set_def():
-        return [0, 0, 0, 0, 0]
-
-    l = defaultdict(set_def)
-
-    find_r1to4(l, graph)
-    find_r5(l, graph)
-
-    l = pd.DataFrame(l) 
-    l = l.to_numpy().T 
-    n = len(l) 
-
-    s = 0.0 # сумма
-    for elem in l:
-        for cond in elem:
-            if cond > 0:
-                p = cond / (n - 1)
-                logp = math.log10(p)
-                s += p * logp
-
-    return -s
-
-
-# In[6]:
-
-
-def pipeline(file):
-    A = pd.read_csv(file).to_numpy()
-    entropy = entropy_calc(A)
-    print(f"Ответ: энтропия равна {entropy:.4f} \n")
-
-
-# In[7]:
-
-
-file = "task4.csv"
-pipeline(file)
-
-
-# In[ ]:
-
-
-
-
+def task(str_graph):
+    graph = readString(str_graph)
+    node_list = getNodeList(graph)
+    rez = []
+    for node in node_list:
+        r1 = findChild(node, graph)
+        r2 = findParent(node, graph)
+        r3 = findDescendant(node, graph)
+        r4 = findAncestor(node, graph)
+        r5 = findNeighbours(node, graph)
+        rez.append(["n" + node, [len(r1), len(r2), len(r3), len(r4), len(r5)]])
+    entropy = findEntropy(rez)
+    return entropy
